@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1E3A5F">
+  <title>Acquirer Management</title>
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ══════════════════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════════════════ -->
+  <header class="app-header">
+    <div class="app-header-inner">
+      <h1 class="app-title">Acquirer Management</h1>
+      <div class="header-actions">
+        <div id="account-badge" class="account-badge" style="display:none">
+          <span id="account-email"></span>
+          <button class="btn-link" id="btn-signout">Cerrar sesión</button>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-signin">
+          Iniciar sesión con Google
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════
+       MAIN
+  ══════════════════════════════════════════════════════════ -->
+  <main class="app-main">
+
+    <!-- ── Warnings ───────────────────────────────────────── -->
+    <div id="warn-signin" class="warning-card" style="display:none">
+      Inicia sesión con tu cuenta de Google para comenzar.
+    </div>
+    <div id="warn-sheet" class="warning-card" style="display:none">
+      Selecciona la Google Sheet con la que quieres trabajar.
+    </div>
+
+    <!-- ── Section: Sheet Selection ───────────────────────── -->
+    <section class="card">
+      <h2 class="section-heading">1. Selecciona la hoja de cálculo</h2>
+      <div class="row">
+        <div class="text-field grow">
+          <label>Hoja seleccionada</label>
+          <input id="cfg-sheet-name" type="text" disabled placeholder="(ninguna)">
+        </div>
+        <button class="btn btn-primary" id="btn-pick-sheet">
+          Seleccionar de Drive
+        </button>
+      </div>
+      <div class="text-field" style="margin-top:12px">
+        <label>ID de la hoja</label>
+        <input id="cfg-sheet-id" type="text" disabled placeholder="—">
+      </div>
+    </section>
+
+    <!-- ── Section: Actions ───────────────────────────────── -->
+    <section class="card">
+      <h2 class="section-heading">2. Acciones</h2>
+      <p class="section-sub">
+        Estas operaciones modifican la hoja de cálculo seleccionada.
+      </p>
+
+      <div class="action-grid">
+        <div class="action-item">
+          <div class="action-info">
+            <div class="action-title">Generar compañías</div>
+            <div class="action-desc">
+              Crea la pestaña <strong>Total compañías</strong> con 1,000 compañías
+              generadas aleatoriamente (Id, Nombre, Estado).
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-generate" disabled>
+            Generar compañías
+          </button>
+        </div>
+
+        <div class="action-item">
+          <div class="action-info">
+            <div class="action-title">Separar compañías</div>
+            <div class="action-desc">
+              Crea la pestaña <strong>Trabajo</strong> con 280 compañías vinculadas
+              a <strong>Total compañías</strong>. Los cambios se reflejan entre ambas pestañas.
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-separate" disabled>
+            Separar compañías
+          </button>
+        </div>
+
+        <div class="action-item">
+          <div class="action-info">
+            <div class="action-title">Asignar empresas</div>
+            <div class="action-desc">
+              Crea 8 pestañas <strong>Ejecutivo 1..8</strong>, distribuyendo
+              las 1,000 compañías de forma balanceada y vinculadas al maestro.
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-assign" disabled>
+            Asignar empresas
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Section: Log ───────────────────────────────────── -->
+    <section class="card">
+      <h2 class="section-heading">Actividad</h2>
+      <div id="log" class="log"></div>
+    </section>
+
+  </main>
+</div><!-- /#app -->
+
+<!-- ══════════════════════════════════════════════════════════
+     DIALOG: Sheet Picker
+══════════════════════════════════════════════════════════ -->
+<div class="dialog-overlay" id="sheet-picker-dialog">
+  <div class="dialog">
+    <h3>Seleccionar Google Sheet</h3>
+    <div class="dialog-list" id="sheet-picker-list"></div>
+    <div class="dialog-actions">
+      <button class="btn-dialog-cancel" id="sheet-picker-cancel">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DIALOG: Confirm
+══════════════════════════════════════════════════════════ -->
+<div class="dialog-overlay" id="confirm-dialog">
+  <div class="dialog">
+    <h3 id="confirm-title">Confirmar</h3>
+    <p id="confirm-message" class="confirm-msg"></p>
+    <div class="dialog-actions">
+      <button class="btn-dialog-cancel" id="confirm-cancel">Cancelar</button>
+      <button class="btn-dialog-ok"     id="confirm-ok">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     Loading overlay & Toast
+══════════════════════════════════════════════════════════ -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div id="loading-text">Cargando...</div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>
