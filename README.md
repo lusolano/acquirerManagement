@@ -41,36 +41,120 @@ filas específicas de `Total compañías`. Esto significa:
   fórmulas de las columnas C y D de las pestañas `Ejecutivo N` se actualizan
   automáticamente.
 
-## Requisitos previos
+## Configuración paso a paso
 
-1. **Proyecto en Google Cloud Console** con las APIs habilitadas:
-   - Google Sheets API
-   - Google Drive API
-2. **Credenciales OAuth 2.0 (Web application)**:
-   - Authorized JavaScript origins:
-     - `http://localhost:8080` (desarrollo local)
-     - el dominio final de despliegue, si aplica
-   - Copia el *Client ID* generado.
-3. **Pega el Client ID** en `js/auth.js`:
+### 1. Crear (o seleccionar) un proyecto en Google Cloud
 
-   ```js
-   export const GOOGLE_CLIENT_ID = '123456789-abc.apps.googleusercontent.com';
-   ```
+1. Abre <https://console.cloud.google.com/> e inicia sesión con el Gmail
+   que vas a usar.
+2. En el selector de proyectos (barra superior) elige **New Project**.
+   Ponle un nombre como `acquirerManagement` (o selecciona uno existente).
+   Espera a que se cree y asegúrate de tenerlo seleccionado.
 
-## Correr localmente
+### 2. Habilitar las APIs necesarias
 
-Como son archivos estáticos, cualquier servidor HTTP funciona. Con Python:
+En el menú lateral: **APIs & Services → Library**. Busca y presiona
+**Enable** en cada una:
 
-```bash
-cd acquirerManagement
-python -m http.server 8080
+- **Google Sheets API**
+- **Google Drive API**
+
+Puedes verificar que ambas quedaron activas en
+**APIs & Services → Enabled APIs & services**.
+
+### 3. Configurar la pantalla de consentimiento OAuth (solo la primera vez)
+
+**APIs & Services → OAuth consent screen**
+
+- **User type**: `External` (a menos que tengas Google Workspace, en cuyo
+  caso `Internal` también sirve).
+- Campos obligatorios:
+  - *App name*: `Acquirer Management`
+  - *User support email*: tu Gmail
+  - *Developer contact*: tu Gmail
+- Presiona **Save and Continue**.
+- **Scopes**: déjalo vacío y presiona **Save and Continue**. Los scopes
+  los solicita la app en tiempo de ejecución desde `js/auth.js`, no hace
+  falta declararlos aquí.
+- **Test users**: presiona **+ Add Users** y agrega cada Gmail que vaya
+  a usar la app (al menos el tuyo). Mientras la app esté en estado
+  *Testing*, solo los usuarios listados pueden autenticarse.
+- Guarda.
+
+### 4. Crear el OAuth 2.0 Client ID
+
+**APIs & Services → Credentials → + Create Credentials → OAuth client ID**
+
+- **Application type**: `Web application`
+- **Name**: cualquier cosa, p. ej. `acquirerManagement local`
+- **Authorized JavaScript origins** → **+ Add URI**:
+  - `http://localhost:8080`
+  - (más adelante) cualquier origen de producción al que vayas a desplegar
+- **Authorized redirect URIs**: déjalo vacío. Este flujo usa el
+  *token client* de GIS, que no necesita redirect URIs.
+- Presiona **Create**. El diálogo muestra el *Client ID* — cópialo. Se ve
+  así: `123456789012-abc…xyz.apps.googleusercontent.com`.
+
+### 5. Pegar el Client ID en el código
+
+Abre `js/auth.js` y reemplaza la línea:
+
+```js
+export const GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID.apps.googleusercontent.com';
 ```
 
-Abre <http://localhost:8080> en el navegador.
+con tu Client ID real (mantén las comillas).
 
-> **Nota**: `file://` no funciona porque el módulo `auth.js` carga el script
-> de Google Identity Services y los módulos ES no se pueden importar desde
-> `file://`.
+### 6. Servir la app en el puerto 8080
+
+Los módulos ES y Google Identity Services **no** funcionan desde `file://`,
+y el puerto debe coincidir exactamente con el origen registrado en el
+paso 4. Abre una terminal en la carpeta del proyecto:
+
+```bash
+cd /c/Programming/lsolano/acquirerManagement
+```
+
+Luego elige una opción:
+
+- **Python** (si está instalado): `python -m http.server 8080`
+- **Node**: `npx http-server -p 8080 -c-1`
+- **VS Code**: instala la extensión *Live Server*, haz clic derecho en
+  `index.html` → *Open with Live Server*, y configura su puerto a 8080
+  en los *settings* de la extensión.
+
+Abre <http://localhost:8080> en el navegador. Deberías ver la interfaz
+en español con un encabezado azul.
+
+### 7. Preparar una Google Sheet de destino
+
+La app **no** crea archivos de hoja de cálculo — escribe pestañas dentro
+de una hoja que ya es tuya. Ve a <https://sheets.google.com> y crea una
+hoja vacía, por ejemplo `Acquirer Test`. No hace falta dejarla abierta.
+
+### 8. Primera corrida
+
+1. En la SPA presiona **Iniciar sesión con Google**.
+2. Elige el Gmail que agregaste como *test user*. Concede permisos de
+   Sheets y Drive cuando te los pida.
+3. Presiona **Seleccionar de Drive**. Tu hoja aparece en el diálogo —
+   haz clic en ella.
+4. Presiona los tres botones en orden:
+   - **Generar compañías** → crea `Total compañías` con 1,000 filas.
+   - **Separar Compañias** → crea `Trabajo` con 280 filas Pendiente.
+   - **Asignar Empresas** → crea `Ejecutivo 1..8` **y** marca las filas
+     del maestro como `Asignado` con el nombre del ejecutivo.
+
+## Errores comunes
+
+| Error | Causa | Solución |
+|---|---|---|
+| `redirect_uri_mismatch` | El URL del navegador no coincide con un *JavaScript origin* registrado. | Asegúrate de estar en `http://localhost:8080` exactamente — no `127.0.0.1`, no otro puerto. |
+| `access_denied` / `403: access denied` | La app está en modo *Testing* y tu Gmail no está en la lista de *test users*. | Agrégalo en **OAuth consent screen → Test users** y vuelve a iniciar sesión. |
+| `Sheets API 403` | Las APIs no están habilitadas, o el token no tiene el scope correcto. | Revisa el paso 2. Presiona **Cerrar sesión** y vuelve a entrar para que los scopes se soliciten otra vez. |
+| Página en blanco, `Failed to resolve module specifier` en la consola | Abriste el archivo con `file://`. | Sírvelo con `http://localhost:8080`. |
+| En el log aparece `Configura tu Google OAuth Client ID en js/auth.js…` | No pegaste el Client ID en `js/auth.js`. | Paso 5. |
+| `Solo hay N compañías con Estado "Pendiente" (se necesitan 280)` | Ya corriste **Asignar Empresas** (o cambiaste estados a mano), así que quedan menos de 280 filas `Pendiente`. | Vuelve a correr **Generar compañías** para reiniciar el maestro. |
 
 ## Estructura
 
