@@ -7,14 +7,23 @@ compañías con tres botones.
 ## Funcionalidades
 
 1. **Generar compañías** — crea la pestaña `Total compañías` con 1,000
-   compañías aleatorias (Id, Nombre en español, Estado con lista desplegable
-   `Pendiente`/`Asignado`/`Listo`).
+   compañías aleatorias. Cada fila tiene cuatro columnas:
+   - **Id**: número aleatorio de 6 dígitos.
+   - **Nombre**: nombre de empresa en español.
+   - **Estado**: lista desplegable con `Pendiente` / `Asignado` / `Listo`.
+     Todas inician en `Pendiente`.
+   - **Ejecutivo**: vacío por defecto.
 2. **Separar compañías** — crea la pestaña `Trabajo` con 280 compañías
-   seleccionadas al azar, usando fórmulas `='Total compañías'!A{n}` para que
-   las dos pestañas permanezcan vinculadas.
-3. **Asignar empresas** — crea 8 pestañas `Ejecutivo 1`..`Ejecutivo 8`, cada
-   una con una porción balanceada (125) de las 1,000 compañías, también
-   vinculadas por fórmula a `Total compañías`.
+   seleccionadas al azar **de entre las que tengan Estado `Pendiente`**,
+   usando fórmulas `='Total compañías'!A{n}` para que ambas pestañas
+   permanezcan vinculadas.
+3. **Asignar empresas** — lee las compañías con Estado `Pendiente`, las
+   distribuye lo más balanceadamente posible entre 8 pestañas
+   `Ejecutivo 1`..`Ejecutivo 8` (también por fórmula) y, en `Total compañías`,
+   marca su Estado como `Asignado` y escribe el nombre del ejecutivo en la
+   columna `Ejecutivo`. Como resultado, correr el botón dos veces seguidas
+   no re-asigna las mismas compañías: después del primer clic ya no quedan
+   filas `Pendiente`.
 
 ### Sobre el "vinculado" entre pestañas
 
@@ -27,6 +36,10 @@ filas específicas de `Total compañías`. Esto significa:
   derivada, la fórmula de esa celda se reemplaza por un valor literal
   (comportamiento estándar de Google Sheets). La recomendación es editar
   el estado desde `Total compañías`.
+- Al correr **Asignar empresas**, el botón escribe los valores `Asignado`
+  y el nombre del ejecutivo directamente en `Total compañías!C:D`; las
+  fórmulas de las columnas C y D de las pestañas `Ejecutivo N` se actualizan
+  automáticamente.
 
 ## Requisitos previos
 

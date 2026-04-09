@@ -75,32 +75,33 @@ function randomId(usedIds) {
   }
 }
 
-function randomEstado() {
-  return pick(ESTADOS);
-}
-
 export const Companies = {
   ESTADOS,
+  DEFAULT_ESTADO: 'Pendiente',
 
-  /** Generate `count` pseudo-random companies. */
+  /**
+   * Generate `count` pseudo-random companies as 4-column rows:
+   * [Id, Nombre, Estado, Ejecutivo]. Estado defaults to 'Pendiente'
+   * and Ejecutivo starts empty — they are populated by the later buttons.
+   */
   generate(count) {
     const usedIds = new Set();
     const rows = new Array(count);
     for (let i = 0; i < count; i++) {
-      rows[i] = [randomId(usedIds), randomCompanyName(), randomEstado()];
+      rows[i] = [randomId(usedIds), randomCompanyName(), 'Pendiente', ''];
     }
     return rows;
   },
 
   /**
-   * Return `k` distinct indices from [0, n) using a partial Fisher–Yates shuffle.
-   * This is used to pick which rows of "Total compañías" go into the derived tabs.
+   * Pick `k` distinct items from an existing array using a partial
+   * Fisher–Yates shuffle. Non-destructive (copies input first).
    */
-  sampleIndices(n, k) {
-    const a = Array.from({ length: n }, (_, i) => i);
-    const take = Math.min(k, n);
+  sampleFromArray(source, k) {
+    const a = source.slice();
+    const take = Math.min(k, a.length);
     for (let i = 0; i < take; i++) {
-      const j = i + Math.floor(Math.random() * (n - i));
+      const j = i + Math.floor(Math.random() * (a.length - i));
       [a[i], a[j]] = [a[j], a[i]];
     }
     return a.slice(0, take);

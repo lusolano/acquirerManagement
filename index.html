@@ -73,7 +73,7 @@
             <div class="action-title">Generar compañías</div>
             <div class="action-desc">
               Crea la pestaña <strong>Total compañías</strong> con 1,000 compañías
-              generadas aleatoriamente (Id, Nombre, Estado).
+              (Id, Nombre, Estado = <em>Pendiente</em>, Ejecutivo vacío).
             </div>
           </div>
           <button class="btn btn-primary" id="btn-generate" disabled>
@@ -85,8 +85,9 @@
           <div class="action-info">
             <div class="action-title">Separar compañías</div>
             <div class="action-desc">
-              Crea la pestaña <strong>Trabajo</strong> con 280 compañías vinculadas
-              a <strong>Total compañías</strong>. Los cambios se reflejan entre ambas pestañas.
+              Crea la pestaña <strong>Trabajo</strong> con 280 compañías
+              <em>Pendiente</em>, vinculadas a <strong>Total compañías</strong>
+              por fórmulas.
             </div>
           </div>
           <button class="btn btn-primary" id="btn-separate" disabled>
@@ -98,8 +99,10 @@
           <div class="action-info">
             <div class="action-title">Asignar empresas</div>
             <div class="action-desc">
-              Crea 8 pestañas <strong>Ejecutivo 1..8</strong>, distribuyendo
-              las 1,000 compañías de forma balanceada y vinculadas al maestro.
+              Distribuye las compañías <em>Pendiente</em> en 8 pestañas
+              <strong>Ejecutivo 1..8</strong> de forma balanceada, marca su
+              Estado como <em>Asignado</em> y escribe el nombre del ejecutivo
+              en <strong>Total compañías</strong>.
             </div>
           </div>
           <button class="btn btn-primary" id="btn-assign" disabled>
