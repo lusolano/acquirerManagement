@@ -218,6 +218,68 @@ export const Sheets = {
     return pendiente;
   },
 
+  /**
+   * Reads the Trabajo tab: parses A-column formulas to find the
+   * corresponding master row numbers, and reads C-column formatted
+   * values to check current Estado. Returns master row numbers
+   * whose Estado is 'Pendiente'.
+   */
+  async readTrabajoPendienteRows(spreadsheetId) {
+    const trabajo = await this.findSheet(spreadsheetId, TAB.TRABAJO);
+    if (!trabajo) {
+      throw new Error(
+        `Primero corre "Separar Compañias" para crear la pestaña "${TAB.TRABAJO}".`,
+      );
+    }
+    const rowCount = trabajo.properties.gridProperties?.rowCount || (NUM_TRABAJO + 10);
+    const aRange = encodeURIComponent(`${quoteSheet(TAB.TRABAJO)}!A2:A${rowCount}`);
+    const cRange = encodeURIComponent(`${quoteSheet(TAB.TRABAJO)}!C2:C${rowCount}`);
+
+    const [aData, cData] = await Promise.all([
+      apiFetch(`${BASE}/${spreadsheetId}/values/${aRange}?valueRenderOption=FORMULA`),
+      apiFetch(`${BASE}/${spreadsheetId}/values/${cRange}?valueRenderOption=FORMATTED_VALUE`),
+    ]);
+
+    const aValues = aData.values || [];
+    const cValues = cData.values || [];
+    const pendiente = [];
+    for (let i = 0; i < aValues.length; i++) {
+      const formula = aValues[i]?.[0];
+      const estado  = cValues[i]?.[0] || '';
+      if (typeof formula !== 'string') continue;
+      const m = formula.match(/!A(\d+)/);
+      if (!m) continue;
+      if (estado === Companies.DEFAULT_ESTADO) {
+        pendiente.push(parseInt(m[1], 10));
+      }
+    }
+    return pendiente;
+  },
+
+  // ── Protected ranges: A, B, D read-only in derived tabs ─────────────
+  protectReadonlyColumnsRequests(sheetId) {
+    return [
+      {
+        addProtectedRange: {
+          protectedRange: {
+            range: { sheetId, startColumnIndex: 0, endColumnIndex: 2 },
+            description: 'Solo lectura',
+            warningOnly: true,
+          },
+        },
+      },
+      {
+        addProtectedRange: {
+          protectedRange: {
+            range: { sheetId, startColumnIndex: 3, endColumnIndex: 4 },
+            description: 'Solo lectura',
+            warningOnly: true,
+          },
+        },
+      },
+    ];
+  },
+
   // ══════════════════════════════════════════════════════════════════
   // PUBLIC OPERATIONS (mapped to the three SPA buttons)
   // ══════════════════════════════════════════════════════════════════
@@ -287,6 +349,7 @@ export const Sheets = {
       this.headerFormatRequest(sheetId),
       this.estadoValidationRequest(sheetId, NUM_TRABAJO),
       this.autoResizeRequest(sheetId),
+      ...this.protectReadonlyColumnsRequests(sheetId),
     ]);
 
     return { sheetId, count: NUM_TRABAJO };
@@ -294,15 +357,18 @@ export const Sheets = {
 
   /**
    * Button 3 — "Asignar Empresas"
-   * Reads all companies with Estado 'Pendiente', shuffles them, and
-   * distributes them as evenly as possible across 8 "Ejecutivo N" tabs
-   * via formula references. Then, for every assigned company, writes
-   * back to Total compañías: Estado → 'Asignado' and Ejecutivo → tab name.
+   * Reads the Trabajo tab for companies with Estado 'Pendiente',
+   * shuffles them, and distributes as evenly as possible across
+   * 8 "Ejecutivo N" tabs via formula references. Writes back to
+   * Total compañías: Estado → 'Asignado' and Ejecutivo → tab name.
    */
   async asignarEmpresas(spreadsheetId) {
-    const pendingRows = await this.readPendienteRows(spreadsheetId);
+    const pendingRows = await this.readTrabajoPendienteRows(spreadsheetId);
     if (pendingRows.length === 0) {
-      throw new Error('No hay compañías con Estado "Pendiente" para asignar.');
+      throw new Error(
+        `No hay compañías Pendiente en "${TAB.TRABAJO}" para asignar. ` +
+        `Corre primero "Separar Compañias".`,
+      );
     }
 
     // Shuffle (copy first so we don't mutate the cached array)
@@ -349,6 +415,7 @@ export const Sheets = {
         this.headerFormatRequest(sheetId),
         this.estadoValidationRequest(sheetId, bucket.length),
         this.autoResizeRequest(sheetId),
+        ...this.protectReadonlyColumnsRequests(sheetId),
       ]);
 
       perTab.push({ title, sheetId, count: bucket.length });

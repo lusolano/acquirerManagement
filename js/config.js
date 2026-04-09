@@ -37,4 +37,11 @@ export const Config = {
 
   isSignedIn()   { return !!this._get('USER_EMAIL'); },
   isConfigured() { return !!this._get('SPREADSHEET_ID'); },
+
+  isSyncScriptInstalled(spreadsheetId) {
+    return !!localStorage.getItem(`am_sync_script_${spreadsheetId}`);
+  },
+  markSyncScriptInstalled(spreadsheetId) {
+    localStorage.setItem(`am_sync_script_${spreadsheetId}`, '1');
+  },
 };

@@ -8,6 +8,7 @@ export const GOOGLE_CLIENT_ID = '269179157407-77ffj7c5gctajq8u4oibq9po7kh79rtr.a
 const SCOPES = [
   'https://www.googleapis.com/auth/drive.readonly',
   'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/script.projects',
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile',
 ].join(' ');

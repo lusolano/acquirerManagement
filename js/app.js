@@ -2,6 +2,7 @@ import { Config } from './config.js';
 import { Auth, GOOGLE_CLIENT_ID } from './auth.js';
 import { Drive }  from './drive.js';
 import { Sheets, TAB } from './sheets.js';
+import { AppsScript } from './appsScript.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -166,6 +167,7 @@ async function handleGenerate() {
   showLoading('Generando 1,000 compañías...');
   try {
     await Sheets.generateTotalCompanias(id);
+    await ensureSyncScript(id);
     showToast(`Pestaña "${TAB.TOTAL}" creada`, 'success');
     logLine(`Creada <strong>${TAB.TOTAL}</strong> en "${name}" con 1,000 compañías`, 'success');
   } catch (e) {
@@ -231,6 +233,22 @@ async function handleAssign() {
     logLine('Error al asignar empresas: ' + e.message, 'error');
   } finally {
     hideLoading();
+  }
+}
+
+// ── Apps Script sync ─────────────────────────────────────────────────
+async function ensureSyncScript(spreadsheetId) {
+  if (Config.isSyncScriptInstalled(spreadsheetId)) return;
+  try {
+    logLine('Instalando script de sincronización de Estado...');
+    await AppsScript.install(spreadsheetId);
+    Config.markSyncScriptInstalled(spreadsheetId);
+    logLine('Script de sincronización instalado', 'success');
+  } catch (e) {
+    logLine(
+      'No se pudo instalar script de sincronización: ' + e.message,
+      'error',
+    );
   }
 }
 

@@ -17,13 +17,11 @@ compañías con tres botones.
    seleccionadas al azar **de entre las que tengan Estado `Pendiente`**,
    usando fórmulas `='Total compañías'!A{n}` para que ambas pestañas
    permanezcan vinculadas.
-3. **Asignar empresas** — lee las compañías con Estado `Pendiente`, las
-   distribuye lo más balanceadamente posible entre 8 pestañas
-   `Ejecutivo 1`..`Ejecutivo 8` (también por fórmula) y, en `Total compañías`,
-   marca su Estado como `Asignado` y escribe el nombre del ejecutivo en la
-   columna `Ejecutivo`. Como resultado, correr el botón dos veces seguidas
-   no re-asigna las mismas compañías: después del primer clic ya no quedan
-   filas `Pendiente`.
+3. **Asignar empresas** — lee las compañías con Estado `Pendiente` **de la
+   pestaña `Trabajo`** (no de toda `Total compañías`), las distribuye lo
+   más balanceadamente posible entre 8 pestañas `Ejecutivo 1`..`Ejecutivo 8`
+   (también por fórmula) y, en `Total compañías`, marca su Estado como
+   `Asignado` y escribe el nombre del ejecutivo en la columna `Ejecutivo`.
 
 ### Sobre el "vinculado" entre pestañas
 
@@ -32,10 +30,12 @@ filas específicas de `Total compañías`. Esto significa:
 
 - Cambios hechos en `Total compañías` se reflejan automáticamente en las
   pestañas derivadas (propagación instantánea).
-- Si se selecciona un nuevo valor en la lista desplegable de una pestaña
-  derivada, la fórmula de esa celda se reemplaza por un valor literal
-  (comportamiento estándar de Google Sheets). La recomendación es editar
-  el estado desde `Total compañías`.
+- Si se cambia el **Estado** en una pestaña derivada, un script de Apps
+  Script (`onEdit`) actualiza `Total compañías` y restaura la fórmula
+  en la celda editada, logrando **sincronización bidireccional** de Estado.
+- Las columnas **Id**, **Nombre** y **Ejecutivo** están protegidas
+  (solo lectura con advertencia) en las pestañas derivadas; únicamente
+  la columna **Estado** es editable.
 - Al correr **Asignar empresas**, el botón escribe los valores `Asignado`
   y el nombre del ejecutivo directamente en `Total compañías!C:D`; las
   fórmulas de las columnas C y D de las pestañas `Ejecutivo N` se actualizan
@@ -58,8 +58,10 @@ En el menú lateral: **APIs & Services → Library**. Busca y presiona
 
 - **Google Sheets API**
 - **Google Drive API**
+- **Apps Script API** — necesaria para instalar el script de sincronización
+  bidireccional de Estado.
 
-Puedes verificar que ambas quedaron activas en
+Puedes verificar que las tres quedaron activas en
 **APIs & Services → Enabled APIs & services**.
 
 ### 3. Configurar la pantalla de consentimiento OAuth (solo la primera vez)
@@ -136,14 +138,15 @@ hoja vacía, por ejemplo `Acquirer Test`. No hace falta dejarla abierta.
 
 1. En la SPA presiona **Iniciar sesión con Google**.
 2. Elige el Gmail que agregaste como *test user*. Concede permisos de
-   Sheets y Drive cuando te los pida.
+   Sheets, Drive y Apps Script cuando te los pida.
 3. Presiona **Seleccionar de Drive**. Tu hoja aparece en el diálogo —
    haz clic en ella.
 4. Presiona los tres botones en orden:
-   - **Generar compañías** → crea `Total compañías` con 1,000 filas.
+   - **Generar compañías** → crea `Total compañías` con 1,000 filas e
+     instala el script de sincronización de Estado.
    - **Separar Compañias** → crea `Trabajo` con 280 filas Pendiente.
-   - **Asignar Empresas** → crea `Ejecutivo 1..8` **y** marca las filas
-     del maestro como `Asignado` con el nombre del ejecutivo.
+   - **Asignar Empresas** → toma las compañías Pendiente de `Trabajo`,
+     crea `Ejecutivo 1..8` y marca las filas como `Asignado`.
 
 ## Errores comunes
 
@@ -155,6 +158,8 @@ hoja vacía, por ejemplo `Acquirer Test`. No hace falta dejarla abierta.
 | Página en blanco, `Failed to resolve module specifier` en la consola | Abriste el archivo con `file://`. | Sírvelo con `http://localhost:8080`. |
 | En el log aparece `Configura tu Google OAuth Client ID en js/auth.js…` | No pegaste el Client ID en `js/auth.js`. | Paso 5. |
 | `Solo hay N compañías con Estado "Pendiente" (se necesitan 280)` | Ya corriste **Asignar Empresas** (o cambiaste estados a mano), así que quedan menos de 280 filas `Pendiente`. | Vuelve a correr **Generar compañías** para reiniciar el maestro. |
+| `Apps Script API 403` | La Apps Script API no está habilitada en tu proyecto de GCP. | Paso 2: habilita **Apps Script API** en *APIs & Services → Library*. |
+| El script de sincronización no se dispara al editar | El script se instala al correr **Generar compañías**. Si cambiaste de hoja, vuelve a correr ese botón. | Presiona **Generar compañías** de nuevo. El script se instala una vez por hoja. |
 
 ## Estructura
 
@@ -165,6 +170,7 @@ acquirerManagement/
 │   └── app.css
 ├── js/
 │   ├── app.js         # lógica de UI, handlers de los 3 botones
+│   ├── appsScript.js  # instala script onEdit para sincronización de Estado
 │   ├── auth.js        # Google Identity Services (token client)
 │   ├── config.js      # persistencia en localStorage
 │   ├── drive.js       # listar Google Sheets del usuario
@@ -177,5 +183,6 @@ acquirerManagement/
 
 - `drive.readonly` — para listar las hojas del usuario en el selector.
 - `spreadsheets` — para crear pestañas y escribir datos.
+- `script.projects` — para crear e instalar el script de sincronización.
 - `userinfo.email`, `userinfo.profile` — para mostrar el correo del
   usuario conectado.
